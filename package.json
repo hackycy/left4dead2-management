@@ -1,7 +1,8 @@
 {
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:server": "pnpm -C ./server run build",
+    "build:web": "pnpm -C ./web run build"
   },
   "engines": {
     "node": ">=18.17.0",

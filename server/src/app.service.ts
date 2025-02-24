@@ -38,13 +38,7 @@ export class AppService {
     execSync(`kill -9 ${pids}`, { stdio: 'ignore' });
   }
 
-  changeMode(path: string) {
-    try {
-      execSync(`sudo chmod -R 777 ${path}`, {
-        stdio: 'ignore',
-      });
-    } catch {
-      // ignore
-    }
+  chmod(path: string) {
+    execSync(`sudo chmod -R 777 ${path}`, { stdio: 'inherit' });
   }
 }

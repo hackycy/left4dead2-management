@@ -48,9 +48,13 @@ export class AppController {
 
   @Get('grant')
   grant(): string {
-    this.appService.changeMode(
-      this.configService.get<string>('LEFT4DEAD2_PATH')!,
-    );
-    return 'permission granted';
+    try {
+      this.appService.chmod(
+        this.configService.get<string>('LEFT4DEAD2_INSTALL_PATH')!,
+      );
+      return 'permission granted';
+    } catch (error) {
+      return `${error}`;
+    }
   }
 }
