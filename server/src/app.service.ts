@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { spawn, execSync } from 'node:child_process';
+import { createWriteStream } from 'node:fs';
+import { join } from 'node:path';
 
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return 'Hello World!';
-  }
+  private logStream = createWriteStream(join(__dirname, '../server.log'), {
+    flags: 'a',
+  });
 
-  findProcessByPort(port: number | string = 27015): string {
+  findProcessByPort(port: number | string): string {
     try {
       const result = execSync(`lsof -i tcp:${port} -i udp:${port} -t`, {
         stdio: 'pipe',
@@ -20,18 +22,23 @@ export class AppService {
     }
   }
 
-  isPortOccupied(port: number | string = 27015): boolean {
+  isPortOccupied(port: number | string): boolean {
     return !!this.findProcessByPort(port);
   }
 
   execShellScript(script: string) {
-    const child = spawn(script, {
+    const process = spawn('sh', [script], {
       detached: true,
-      stdio: 'ignore',
-      shell: '/bin/bash',
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
 
-    child.unref();
+    process.on('error', (error) => {
+      const logEntry = `[${new Date().toISOString()}] ${error.message}\n`;
+      this.logStream.write(logEntry);
+    });
+
+    // 解除进程引用
+    process.unref();
   }
 
   killProcess(pids: number | string) {

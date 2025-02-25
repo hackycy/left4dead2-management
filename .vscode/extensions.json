@@ -2,6 +2,9 @@
   "recommendations": [
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
-    "mikestead.dotenv"
+    "mikestead.dotenv",
+    "Vue.volar",
+    "EditorConfig.EditorConfig",
+    "esbenp.prettier-vscode"
   ]
 }

@@ -12,7 +12,7 @@ export class AppController {
   @Get('stop')
   stop(): string {
     const pid = this.appService.findProcessByPort(
-      this.configService.get<string>('LEFT4DEAD2_PORT'),
+      this.configService.get<string>('LEFT4DEAD2_PORT')!,
     );
     if (pid) {
       this.appService.killProcess(pid);
@@ -25,7 +25,7 @@ export class AppController {
   start(): string {
     if (
       this.appService.isPortOccupied(
-        this.configService.get<string>('LEFT4DEAD2_PORT'),
+        this.configService.get<string>('LEFT4DEAD2_PORT')!,
       )
     ) {
       return 'service is running';
@@ -40,7 +40,7 @@ export class AppController {
   @Get('status')
   status(): string {
     return this.appService.isPortOccupied(
-      this.configService.get<string>('LEFT4DEAD2_PORT'),
+      this.configService.get<string>('LEFT4DEAD2_PORT')!,
     )
       ? 'running'
       : 'stopped';

@@ -3,6 +3,13 @@
   "npm.packageManager": "pnpm",
   "files.eol": "\n",
   "editor.tabSize": 2,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "search.exclude": {
     "**/node_modules": true,
@@ -28,11 +35,5 @@
     "screenshots": true,
     "yarn-error.log": true,
     "**/.yarn": true
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "always"
   }
 }
