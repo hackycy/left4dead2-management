@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
+    "dev:server": "pnpm -C ./server run start:dev",
     "build:server": "pnpm -C ./server run build",
     "build:web": "pnpm -C ./web run build",
     "build": "pnpm run build:server && node ./scripts/archive.mjs"

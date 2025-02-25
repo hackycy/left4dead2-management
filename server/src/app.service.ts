@@ -9,16 +9,14 @@ export class AppService {
     flags: 'a',
   });
 
-  findProcessByPort(port: number | string): string {
+  findProcessByPort(port: number | string): string | null {
     try {
-      const result = execSync(`lsof -i tcp:${port} -i udp:${port} -t`, {
+      const output = execSync(`lsof -i tcp:${port} -i udp:${port} -t`, {
         stdio: 'pipe',
-      })
-        .toString()
-        .trim();
-      return result;
+      });
+      return output.toString().trim() || null;
     } catch {
-      return '';
+      return null;
     }
   }
 
@@ -45,7 +43,18 @@ export class AppService {
     execSync(`kill -9 ${pids}`, { stdio: 'ignore' });
   }
 
-  chmodRW(target: string) {
-    execSync(`sudo chmod -R a+rwX ${target}`, { stdio: 'inherit' });
+  overwriteDirPermission(target: string) {
+    execSync(`sudo chmod -R 770 ${target}`, { stdio: 'inherit' });
+  }
+
+  checkGroupExists(group: string): boolean {
+    try {
+      const output = execSync(`getent group ${group}`, {
+        stdio: 'pipe',
+      });
+      return output.toString().trim() !== '';
+    } catch {
+      return false;
+    }
   }
 }

@@ -52,16 +52,10 @@ export class AppController {
   @Get('grant')
   grant(): string {
     try {
-      this.appService.chmodRW(
+      this.appService.overwriteDirPermission(
         join(
           this.configService.get<string>('LEFT4DEAD2_INSTALL_PATH')!,
           'left4dead2/addons',
-        ),
-      );
-      this.appService.chmodRW(
-        join(
-          this.configService.get<string>('LEFT4DEAD2_INSTALL_PATH')!,
-          'left4dead2/cfg',
         ),
       );
       return 'permission granted';
