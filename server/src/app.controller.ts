@@ -1,6 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ConfigService } from '@nestjs/config';
+import { join } from 'node:path';
 
 @Controller('api')
 export class AppController {
@@ -23,12 +24,12 @@ export class AppController {
 
   @Get('start')
   start(): string {
-    if (
-      this.appService.isPortOccupied(
-        this.configService.get<string>('LEFT4DEAD2_PORT')!,
-      )
-    ) {
-      return 'service is running';
+    const isRunning = this.appService.isPortOccupied(
+      this.configService.get<string>('LEFT4DEAD2_PORT')!,
+    );
+
+    if (isRunning) {
+      return 'service is already running';
     }
 
     this.appService.execShellScript(
@@ -39,18 +40,29 @@ export class AppController {
 
   @Get('status')
   status(): string {
-    return this.appService.isPortOccupied(
+    const isRunning = this.appService.isPortOccupied(
       this.configService.get<string>('LEFT4DEAD2_PORT')!,
-    )
-      ? 'running'
-      : 'stopped';
+    );
+    return JSON.stringify({
+      status: 0,
+      message: isRunning ? 'running' : 'stopped',
+    });
   }
 
   @Get('grant')
   grant(): string {
     try {
-      this.appService.chmod(
-        this.configService.get<string>('LEFT4DEAD2_INSTALL_PATH')!,
+      this.appService.chmodRW(
+        join(
+          this.configService.get<string>('LEFT4DEAD2_INSTALL_PATH')!,
+          'left4dead2/addons',
+        ),
+      );
+      this.appService.chmodRW(
+        join(
+          this.configService.get<string>('LEFT4DEAD2_INSTALL_PATH')!,
+          'left4dead2/cfg',
+        ),
       );
       return 'permission granted';
     } catch (error) {

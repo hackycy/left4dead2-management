@@ -2,10 +2,15 @@
   "private": true,
   "scripts": {
     "build:server": "pnpm -C ./server run build",
-    "build:web": "pnpm -C ./web run build"
+    "build:web": "pnpm -C ./web run build",
+    "build": "pnpm run build:server && node ./scripts/archive.mjs"
   },
   "engines": {
     "node": ">=18.17.0",
     "pnpm": ">=8.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "fs-extra": "^11.3.0"
   }
 }

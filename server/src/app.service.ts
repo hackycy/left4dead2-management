@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { spawn, execSync } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
-import { join } from 'node:path';
+import { SERVER_LOG_FILE_PATH } from './constant';
 
 @Injectable()
 export class AppService {
-  private logStream = createWriteStream(join(__dirname, '../server.log'), {
+  private logStream = createWriteStream(SERVER_LOG_FILE_PATH, {
     flags: 'a',
   });
 
@@ -45,7 +45,7 @@ export class AppService {
     execSync(`kill -9 ${pids}`, { stdio: 'ignore' });
   }
 
-  chmod(path: string) {
-    execSync(`sudo chmod -R 777 ${path}`, { stdio: 'inherit' });
+  chmodRW(target: string) {
+    execSync(`sudo chmod -R a+rwX ${target}`, { stdio: 'inherit' });
   }
 }
