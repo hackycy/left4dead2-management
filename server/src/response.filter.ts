@@ -7,7 +7,7 @@ export class ResponseFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
-    response.status(200).json({
+    response.status(500).json({
       msg: `${exception as string}`,
       code: 500,
       data: null,
