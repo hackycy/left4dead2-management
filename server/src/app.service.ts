@@ -79,4 +79,15 @@ export class AppService {
       return false;
     }
   }
+
+  killL4d2Process() {
+    execSync(
+      `ps -ef | grep "srcds_run" | grep -v grep  | awk '{print $2}' | xargs kill -9`,
+      { stdio: 'inherit' },
+    );
+    execSync(
+      `ps -ef | grep "srcds_linux" | grep -v grep  | awk '{print $2}' | xargs kill -9`,
+      { stdio: 'inherit' },
+    );
+  }
 }

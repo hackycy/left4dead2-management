@@ -21,18 +21,12 @@ export class AppController {
     });
   }
 
-  @Get('stop')
+  @Get('api/stop')
   stop() {
-    const pid = this.appService.findProcessByPort(
-      this.configService.get<string>('LEFT4DEAD2_PORT')!,
-    );
-
-    if (pid) {
-      this.appService.killProcess(pid);
-    }
+    this.appService.killL4d2Process();
   }
 
-  @Get('start')
+  @Get('api/start')
   start() {
     const pid = this.appService.findProcessByPort(
       this.configService.get<string>('LEFT4DEAD2_PORT')!,
@@ -57,7 +51,7 @@ export class AppController {
     this.appService.execShellScript(sh);
   }
 
-  @Get('status')
+  @Get('api/status')
   status() {
     const pid = this.appService.findProcessByPort(
       this.configService.get<string>('LEFT4DEAD2_PORT')!,

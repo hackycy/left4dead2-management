@@ -35,8 +35,8 @@ body {
 }
 
 .dashboard {
-  width: 100%;
-  max-width: 1000px;
+  max-width: 95vw;
+  width: 1000px;
   backdrop-filter: blur(20px) saturate(180%);
   background-color: var(--panel-bg);
   border-radius: 24px;
@@ -63,6 +63,8 @@ body {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .metric-card {
@@ -658,7 +660,7 @@ body {
 /* 实际日志内容，带滚动条 */
 .log-content {
   flex: 1;
-  overflow-y: scroll;
+  overflow-y: auto;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 12px;
   padding: 1rem;
