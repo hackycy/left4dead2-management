@@ -1,6 +1,6 @@
 {
   "name": "@l4d2/server",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "Left4dead2 Management Server",
   "author": "hackycy",
   "private": true,

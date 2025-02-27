@@ -4,7 +4,6 @@
     "esbenp.prettier-vscode",
     "mikestead.dotenv",
     "Vue.volar",
-    "EditorConfig.EditorConfig",
     "esbenp.prettier-vscode"
   ]
 }
