@@ -69,7 +69,7 @@
             <div
               class="circular-progress-status clickable"
               :class="{ active: isRunning, inactive: !isRunning }"
-              @click="toggleService"
+              @click="showServiceConfirmation"
             >
               <i
                 class="fas fa-power-off"
@@ -125,10 +125,20 @@
       </div>
     </div>
   </div>
+
+  <!-- 确认对话框组件 -->
+  <ConfirmDialog
+    :show="showConfirm"
+    :title="confirmTitle"
+    :message="confirmMessage"
+    @confirm="confirmAction"
+    @cancel="cancelAction"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
+import ConfirmDialog from "./components/ConfirmDialog.vue";
 
 // 响应式数据
 const cpuUsage = ref(0);
@@ -139,6 +149,12 @@ const logs = ref<{ type: string; message: string; timestamp: string }[]>([]);
 const logContent = ref<HTMLElement | null>(null);
 const isChangingCpu = ref(false);
 const isChangingMem = ref(false);
+
+// 确认对话框状态
+const showConfirm = ref(false);
+const confirmTitle = ref("");
+const confirmMessage = ref("");
+const pendingAction = ref<(() => void) | null>(null);
 
 // 模拟日志数据
 const logMessages = [
@@ -176,8 +192,37 @@ const getMemoryColor = () => {
   return "var(--text-primary)";
 };
 
-// 运行状态切换
-const toggleService = () => {
+// 显示服务操作确认对话框
+const showServiceConfirmation = () => {
+  if (isRunning.value) {
+    confirmTitle.value = "停止服务";
+    confirmMessage.value = "确定要停止服务吗？这将断开所有当前连接。";
+  } else {
+    confirmTitle.value = "启动服务";
+    confirmMessage.value = "确定要启动服务吗？";
+  }
+
+  pendingAction.value = performToggleService;
+  showConfirm.value = true;
+};
+
+// 确认对话框确认操作
+const confirmAction = () => {
+  if (pendingAction.value) {
+    pendingAction.value();
+    pendingAction.value = null;
+  }
+  showConfirm.value = false;
+};
+
+// 确认对话框取消操作
+const cancelAction = () => {
+  pendingAction.value = null;
+  showConfirm.value = false;
+};
+
+// 实际执行服务切换
+const performToggleService = () => {
   isRunning.value = !isRunning.value;
 
   // 添加启动/停止日志
