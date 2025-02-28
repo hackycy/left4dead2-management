@@ -46,7 +46,7 @@ async function archive() {
     });
   };
 
-  zipDistFiles(distZip, join(archiveDist, 'dist'));
+  zipDistFiles(distZip.folder('dist'), join(archiveDist, 'dist'));
 
   distZip
     .generateNodeStream({ type: 'nodebuffer', streamFiles: true })

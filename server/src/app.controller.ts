@@ -24,16 +24,18 @@ export class AppController {
 
   @Get('api/stop')
   stop() {
-    this.appService.forceKillL4d2Process();
+    void this.appService.killL4d2Process();
   }
 
   @Get('api/start')
   start() {
-    const pid = this.appService.findProcessByPort(
-      this.configService.get<string>('LEFT4DEAD2_PORT')!,
-    );
+    const port = this.configService.get<string>('LEFT4DEAD2_PORT');
+    if (!port) {
+      throw new AppError('Port not found');
+    }
 
-    if (pid) {
+    const isRunning = this.appService.findL4d2ProcessStatusAlive(port);
+    if (isRunning) {
       throw new AppError('Server is already running');
     }
 
@@ -52,15 +54,14 @@ export class AppController {
 
   @Get('api/status')
   status() {
-    const pid = this.appService.findProcessByPort(
-      this.configService.get<string>('LEFT4DEAD2_PORT')!,
-    );
+    const port = this.configService.get<string>('LEFT4DEAD2_PORT');
+    if (!port) {
+      throw new AppError('Port not found');
+    }
 
     // 避免僵尸进程误判未运行
-    const active = this.appService.findL4d2ProcessStatusAlive();
+    const active = this.appService.findL4d2ProcessStatusAlive(port);
 
-    return {
-      status: pid || active ? 'running' : 'stopped',
-    };
+    return active ? 'running' : 'stopped';
   }
 }

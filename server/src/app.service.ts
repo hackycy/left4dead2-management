@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { spawn, execSync } from 'node:child_process';
-import { writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { writeFileSync, readFileSync, existsSync, unlinkSync } from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { L4D2_PID_FILE_PATH } from './constant';
 import { sleep } from './utils';
@@ -14,25 +14,93 @@ export class AppService {
   }
 
   async killL4d2Process() {
-    if (!existsSync(L4D2_PID_FILE_PATH)) {
+    const hasPidFile = existsSync(L4D2_PID_FILE_PATH);
+
+    try {
+      if (!hasPidFile) {
+        this.forceKillL4d2Process();
+        return;
+      }
+
+      const pid = readFileSync(L4D2_PID_FILE_PATH, 'utf-8').trim();
+      const processTree = execSync(`pstree -p ${pid}`).toString().trim();
+      const pids = this.extractPids(processTree).reverse();
+
+      // 逐个发送 SIGTERM 信号
+      for (const pid of pids) {
+        try {
+          execSync(`kill -TERM ${pid}`, { stdio: 'ignore' });
+        } catch {
+          // ignore
+        }
+      }
+
+      // 超时检测
+      let timeout = 8;
+      while (timeout > 0) {
+        await sleep(1000);
+
+        let isRunning = false;
+
+        for (const pid of pids) {
+          try {
+            execSync(`kill -0 ${pid}`);
+          } catch {
+            isRunning = true;
+          }
+        }
+
+        // 服务已停止，退出循环，停止检测
+        if (!isRunning) {
+          return;
+        }
+
+        timeout--;
+      }
+
+      // 服务未停止，强制杀死
+      for (const pid of pids) {
+        try {
+          execSync(`kill -9 ${pid}`);
+        } catch {
+          // ignore
+        }
+      }
+
       this.forceKillL4d2Process();
-      return;
+    } finally {
+      if (hasPidFile) {
+        unlinkSync(L4D2_PID_FILE_PATH);
+      }
     }
-
-    const pid = readFileSync(L4D2_PID_FILE_PATH, 'utf-8').trim();
-    const processTree = execSync(`pstree -p ${pid}`).toString().trim();
-    const pids = this.extractPids(processTree).reverse();
-
-    // 逐个发送 SIGTERM 信号
-    pids.forEach((pid) => {
-      execSync(`kill -TERM ${pid}`, { stdio: 'ignore' });
-    });
-
-    // 等待 2 秒
-    await sleep(2000);
   }
 
-  findL4d2ProcessStatusAlive(): boolean {
+  forceKillL4d2Process() {
+    try {
+      execSync(
+        `ps -ef | grep "srcds_run" | grep -v grep  | awk '{print $2}' | xargs kill -9`,
+        { stdio: 'inherit' },
+      );
+    } catch {
+      // ignore
+    }
+
+    try {
+      execSync(
+        `ps -ef | grep "srcds_linux" | grep -v grep  | awk '{print $2}' | xargs kill -9`,
+        { stdio: 'inherit' },
+      );
+    } catch {
+      // ignore
+    }
+  }
+
+  findL4d2ProcessStatusAlive(port: string | number): boolean {
+    const udpPid = this.findProcessByPort(port);
+    if (udpPid) {
+      return true;
+    }
+
     const srcdsLinuxPid = this.findSrcdsLinuxProcess();
     if (srcdsLinuxPid) {
       return true;
@@ -67,10 +135,6 @@ export class AppService {
     process.unref();
   }
 
-  killProcess(pids: number | string) {
-    execSync(`kill -9 ${pids}`, { stdio: 'ignore' });
-  }
-
   overwriteDirPermission(target: string) {
     // 不安全操作，还需要优化
     execSync(`sudo chmod -R 777 ${target}`, { stdio: 'inherit' });
@@ -85,17 +149,6 @@ export class AppService {
     } catch {
       return false;
     }
-  }
-
-  forceKillL4d2Process() {
-    execSync(
-      `ps -ef | grep "srcds_run" | grep -v grep  | awk '{print $2}' | xargs kill -9`,
-      { stdio: 'inherit' },
-    );
-    execSync(
-      `ps -ef | grep "srcds_linux" | grep -v grep  | awk '{print $2}' | xargs kill -9`,
-      { stdio: 'inherit' },
-    );
   }
 
   findProcessByPort(port: number | string): string | null {
