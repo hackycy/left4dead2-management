@@ -13,7 +13,7 @@ export class AppService {
     return this._eventEmitter;
   }
 
-  async killL4d2Process() {
+  async killL4d2Process(port: string | number) {
     const hasPidFile = existsSync(L4D2_PID_FILE_PATH);
 
     try {
@@ -51,8 +51,10 @@ export class AppService {
         }
 
         // 服务已停止，退出循环，停止检测
-        if (!isRunning) {
+        if (!isRunning && !this.findL4d2ProcessStatusAlive(port)) {
           return;
+        } else if (!isRunning) {
+          break;
         }
 
         timeout--;

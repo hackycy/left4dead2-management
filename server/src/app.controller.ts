@@ -24,7 +24,12 @@ export class AppController {
 
   @Get('api/stop')
   stop() {
-    void this.appService.killL4d2Process();
+    const port = this.configService.get<string>('LEFT4DEAD2_PORT');
+    if (!port) {
+      throw new AppError('Port not found');
+    }
+
+    void this.appService.killL4d2Process(port);
   }
 
   @Get('api/start')
