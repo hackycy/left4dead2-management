@@ -27,23 +27,23 @@ defineProps({
   },
   title: {
     type: String,
-    default: "确认操作",
+    default: '确认操作',
   },
   message: {
     type: String,
     required: true,
   },
-});
+})
 
-const emit = defineEmits(["confirm", "cancel"]);
+const emit = defineEmits(['confirm', 'cancel'])
 
 const onConfirm = () => {
-  emit("confirm");
-};
+  emit('confirm')
+}
 
 const onCancel = () => {
-  emit("cancel");
-};
+  emit('cancel')
+}
 </script>
 
 <style scoped>

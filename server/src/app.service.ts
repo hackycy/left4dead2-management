@@ -1,26 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { spawn, execSync } from 'node:child_process';
-import { createWriteStream, type WriteStream } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { EventEmitter } from 'node:events';
-import { SERVER_LOG_FILE_PATH } from './constant';
+import { L4D2_PID_FILE_PATH } from './constant';
 
 @Injectable()
 export class AppService {
-  private _logStream: WriteStream;
   private _eventEmitter = new EventEmitter();
 
   public get eventEmitter() {
     return this._eventEmitter;
-  }
-
-  public get logStream() {
-    if (!this._logStream) {
-      this._logStream = createWriteStream(SERVER_LOG_FILE_PATH, {
-        flags: 'a',
-      });
-    }
-
-    return this._logStream;
   }
 
   findProcessByPort(port: number | string): string | null {
@@ -39,13 +28,19 @@ export class AppService {
     const process = spawn('sh', [script], {
       detached: true,
       stdio: ['ignore', 'pipe', 'pipe'],
+      gid: 0,
     });
 
     process.on('error', (error) => {
       this.eventEmitter.emit('event', error.message);
-      const logEntry = `[${new Date().toISOString()}] ${error.message}\n`;
-      this.logStream.write(logEntry);
     });
+
+    const pid = process.pid?.toString() || '';
+
+    // 写入 PID 文件
+    if (pid) {
+      writeFileSync(L4D2_PID_FILE_PATH, pid);
+    }
 
     // 解除进程引用
     process.unref();
@@ -80,7 +75,7 @@ export class AppService {
     }
   }
 
-  killL4d2Process() {
+  forceKillL4d2Process() {
     execSync(
       `ps -ef | grep "srcds_run" | grep -v grep  | awk '{print $2}' | xargs kill -9`,
       { stdio: 'inherit' },

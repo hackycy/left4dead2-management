@@ -23,7 +23,7 @@ export class AppController {
 
   @Get('api/stop')
   stop() {
-    this.appService.killL4d2Process();
+    this.appService.forceKillL4d2Process();
   }
 
   @Get('api/start')
