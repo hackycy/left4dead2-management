@@ -69,9 +69,6 @@ importers:
       '@nestjs/serve-static':
         specifier: ^5.0.3
         version: 5.0.3(@nestjs/common@11.0.10(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.0.10)(express@5.0.1)
-      fs-extra:
-        specifier: ^11.3.0
-        version: 11.3.0
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2

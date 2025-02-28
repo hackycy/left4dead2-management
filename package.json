@@ -4,8 +4,8 @@
     "dev:server": "pnpm -C ./server run start:dev",
     "dev:client": "pnpm -C ./client run dev",
     "build:server": "pnpm -C ./server run build",
-    "build:web": "pnpm -C ./web run build",
-    "build": "pnpm run build:server && node ./scripts/archive.mjs"
+    "build:client": "pnpm -C ./client run build",
+    "build": "pnpm run build:server && pnpm run build:client && node ./scripts/archive.mjs"
   },
   "engines": {
     "node": ">=18.17.0",
