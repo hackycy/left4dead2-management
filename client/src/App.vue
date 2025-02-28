@@ -8,7 +8,7 @@
           <span>CPU 使用率</span>
         </div>
         <div class="metric-content">
-          <div class="circular-progress">
+          <div class="circular-progress" id="cpuProgress">
             <div class="circular-progress-ring">
               <div
                 class="circular-progress-circle"
@@ -35,7 +35,7 @@
           <span>内存使用率</span>
         </div>
         <div class="metric-content">
-          <div class="circular-progress">
+          <div class="circular-progress" id="memoryProgress">
             <div class="circular-progress-ring">
               <div
                 class="circular-progress-circle"

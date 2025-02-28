@@ -80,7 +80,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 180px;
+  min-height: 240px;
 }
 
 .metric-card::after {
