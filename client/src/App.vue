@@ -126,19 +126,23 @@
     </div>
   </div>
 
-  <!-- 确认对话框组件 -->
+  <!-- 确认对话框组件 - 更新为传递密码 -->
   <ConfirmDialog
     :show="showConfirm"
     :title="confirmTitle"
     :message="confirmMessage"
-    @confirm="confirmAction"
+    @confirm="handlePasswordConfirm"
     @cancel="cancelAction"
   />
+
+  <!-- 新增Toast组件 -->
+  <Toast ref="toastRef" />
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
+import Toast from './components/Toast.vue'
 
 // 响应式数据
 const cpuUsage = ref(0)
@@ -192,6 +196,12 @@ const getMemoryColor = () => {
   return 'var(--text-primary)'
 }
 
+// 添加Toast引用
+const toastRef = ref<InstanceType<typeof Toast> | null>(null)
+
+// 管理员密码
+const ADMIN_PASSWORD = 'admin123' // 这个应该从后端验证，这里仅作示例
+
 // 显示服务操作确认对话框
 const showServiceConfirmation = () => {
   if (isRunning.value) {
@@ -207,12 +217,25 @@ const showServiceConfirmation = () => {
 }
 
 // 确认对话框确认操作
-const confirmAction = () => {
+const handlePasswordConfirm = (password: string) => {
+  // 验证密码
+  if (password !== ADMIN_PASSWORD) {
+    // 显示错误提示
+    toastRef.value?.error('密码错误，请重试')
+    return
+  }
+
+  // 密码正确，继续执行操作
   if (pendingAction.value) {
     pendingAction.value()
     pendingAction.value = null
   }
+
+  // 关闭确认对话框
   showConfirm.value = false
+
+  // 显示操作成功提示
+  toastRef.value?.success('操作已成功执行')
 }
 
 // 确认对话框取消操作
