@@ -143,11 +143,12 @@
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 import Toast from './components/Toast.vue'
+import { request } from './request'
 
 // 响应式数据
 const cpuUsage = ref(0)
 const memoryUsage = ref(0)
-const isRunning = ref(true)
+const isRunning = ref(false)
 const isViewingLogs = ref(false)
 const logs = ref<{ type: string; message: string; timestamp: string }[]>([])
 const logContent = ref<HTMLElement | null>(null)
@@ -158,7 +159,7 @@ const isChangingMem = ref(false)
 const showConfirm = ref(false)
 const confirmTitle = ref('')
 const confirmMessage = ref('')
-const pendingAction = ref<(() => void) | null>(null)
+const pendingAction = ref<((pwd: string) => Promise<void> | void) | null>(null)
 
 // 模拟日志数据
 const logMessages = [
@@ -199,9 +200,6 @@ const getMemoryColor = () => {
 // 添加Toast引用
 const toastRef = ref<InstanceType<typeof Toast> | null>(null)
 
-// 管理员密码
-const ADMIN_PASSWORD = 'admin123' // 这个应该从后端验证，这里仅作示例
-
 // 显示服务操作确认对话框
 const showServiceConfirmation = () => {
   if (isRunning.value) {
@@ -212,30 +210,37 @@ const showServiceConfirmation = () => {
     confirmMessage.value = '确定要启动服务吗？'
   }
 
-  pendingAction.value = performToggleService
+  pendingAction.value = async (pwd: string) => {
+    await request({
+      method: 'post',
+      url: isRunning.value ? '/api/stop' : '/api/start',
+      data: {
+        password: pwd,
+      },
+    })
+  }
   showConfirm.value = true
 }
 
 // 确认对话框确认操作
-const handlePasswordConfirm = (password: string) => {
-  // 验证密码
-  if (password !== ADMIN_PASSWORD) {
-    // 显示错误提示
-    toastRef.value?.error('密码错误，请重试')
-    return
-  }
-
-  // 密码正确，继续执行操作
-  if (pendingAction.value) {
-    pendingAction.value()
-    pendingAction.value = null
-  }
-
+const handlePasswordConfirm = async (password: string) => {
   // 关闭确认对话框
   showConfirm.value = false
 
-  // 显示操作成功提示
-  toastRef.value?.success('操作已成功执行')
+  if (pendingAction.value) {
+    try {
+      await pendingAction.value(password)
+
+      // 显示操作成功提示
+      toastRef.value?.success('操作已成功执行')
+    } catch (error) {
+      toastRef.value?.error(`${error}`)
+    } finally {
+      getServiceActive()
+    }
+
+    pendingAction.value = null
+  }
 }
 
 // 确认对话框取消操作
@@ -244,15 +249,16 @@ const cancelAction = () => {
   showConfirm.value = false
 }
 
-// 实际执行服务切换
-const performToggleService = () => {
-  isRunning.value = !isRunning.value
+async function getServiceActive() {
+  try {
+    const resp = await request({
+      method: 'get',
+      url: 'api/status',
+    })
 
-  // 添加启动/停止日志
-  if (isRunning.value) {
-    addLogEntry('success', '服务已启动')
-  } else {
-    addLogEntry('warning', '服务已停止')
+    isRunning.value = resp === 'running'
+  } catch (error) {
+    isRunning.value = false
   }
 }
 
@@ -314,20 +320,24 @@ const addLogEntry = (type: string, message: string) => {
   })
 }
 
-// 启动模拟监控
 const startMonitoring = () => {
-  monitorInterval = window.setInterval(() => {
-    if (isRunning.value) {
-      updateMetrics()
-    }
-  }, 2000)
+  updateMetrics()
+
+  monitorInterval = setTimeout(() => {
+    startMonitoring()
+  }, 1000 * 5)
 }
 
 // 更新指标数据
-const updateMetrics = () => {
+const updateMetrics = async () => {
   // 模拟获取CPU和内存使用率
-  const newCpuUsage = Math.floor(Math.random() * 100)
-  const newMemoryUsage = Math.floor(Math.random() * 100)
+  const resp = await request({
+    method: 'get',
+    url: '/api/metrics',
+  })
+
+  const newCpuUsage = resp.cpu
+  const newMemoryUsage = resp.mem
 
   // 触发值变化的动画效果
   isChangingCpu.value = true
@@ -384,12 +394,13 @@ const animateValue = (target: { value: number }, endValue: number, duration = 80
 onMounted(() => {
   // 初始化
   addLogEntry('info', '服务已在运行中')
+  getServiceActive()
   startMonitoring()
 })
 
 onBeforeUnmount(() => {
   // 清除定时器
-  if (monitorInterval) clearInterval(monitorInterval)
+  if (monitorInterval) clearTimeout(monitorInterval)
   if (logInterval) clearInterval(logInterval)
 })
 

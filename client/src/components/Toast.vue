@@ -45,7 +45,7 @@ const getIconClass = (type: string) => {
 const addToast = (
   message: string,
   type: 'error' | 'success' | 'info' | 'warning' = 'info',
-  duration: number = 3000
+  duration: number = 5000
 ) => {
   const id = toastCounter++
 
@@ -169,6 +169,8 @@ defineExpose({
   flex: 1;
   font-size: 0.95rem;
   font-weight: 500;
+  overflow: hidden;
+  word-wrap: break-word;
 }
 
 /* Toast动画 */

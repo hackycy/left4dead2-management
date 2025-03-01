@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { spawn, execSync } from 'node:child_process';
-import { writeFileSync, readFileSync, existsSync, unlinkSync } from 'node:fs';
+import { writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { L4D2_PID_FILE_PATH } from './constant';
 import { sleep } from './utils';
@@ -71,8 +71,10 @@ export class AppService {
 
       this.forceKillL4d2Process();
     } finally {
-      if (hasPidFile) {
-        unlinkSync(L4D2_PID_FILE_PATH);
+      try {
+        rmSync(L4D2_PID_FILE_PATH);
+      } catch {
+        // ignore
       }
     }
   }
@@ -119,11 +121,7 @@ export class AppService {
   execShellScript(script: string) {
     const process = spawn('sh', [script], {
       detached: true,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-
-    process.on('error', (error) => {
-      this.eventEmitter.emit('event', error.message);
+      stdio: 'ignore',
     });
 
     const pid = process.pid?.toString() || '';

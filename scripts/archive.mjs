@@ -46,6 +46,11 @@ async function archive() {
     });
   };
 
+  distZip.file(
+    'package.json',
+    fs.readFileSync(resolve(archiveDist, 'package.json')),
+  );
+
   zipDistFiles(distZip.folder('dist'), join(archiveDist, 'dist'));
 
   distZip
