@@ -13,16 +13,28 @@ export class AppService {
     return this._eventEmitter;
   }
 
+  sendNotifyMessage(msg: string) {
+    this.eventEmitter.emit('event', { type: 'notify', data: msg });
+  }
+
+  sendRefreshMessage() {
+    this.eventEmitter.emit('event', { type: 'refresh' });
+  }
+
   async killL4d2Process(port: string | number) {
     const hasPidFile = existsSync(L4D2_PID_FILE_PATH);
 
     try {
       if (!hasPidFile) {
-        this.forceKillL4d2Process();
-        return;
+        throw new Error('未找到 PID 文件');
       }
 
       const pid = readFileSync(L4D2_PID_FILE_PATH, 'utf-8').trim();
+      if (!pid) {
+        throw new Error('PID 文件为空');
+      }
+
+      this.sendNotifyMessage(`正在停止服务，PID: ${pid}`);
       const processTree = execSync(`pstree -p ${pid}`).toString().trim();
       const pids = this.extractPids(processTree).reverse();
 
@@ -40,26 +52,25 @@ export class AppService {
       while (timeout > 0) {
         await sleep(1000);
 
-        let isRunning = false;
+        let isRunning = true;
 
         for (const pid of pids) {
           try {
             execSync(`kill -0 ${pid}`);
           } catch {
-            isRunning = true;
+            isRunning = false;
           }
         }
 
         // 服务已停止，退出循环，停止检测
         if (!isRunning && !this.findL4d2ProcessStatusAlive(port)) {
           return;
-        } else if (!isRunning) {
-          break;
         }
 
         timeout--;
       }
 
+      this.sendNotifyMessage('服务停止超时，尝试强制停止');
       // 服务未停止，强制杀死
       for (const pid of pids) {
         try {
@@ -68,9 +79,16 @@ export class AppService {
           // ignore
         }
       }
-
+      this.forceKillL4d2Process();
+    } catch {
+      this.sendNotifyMessage('服务停止失败，尝试强制停止');
       this.forceKillL4d2Process();
     } finally {
+      if (!this.findL4d2ProcessStatusAlive(port)) {
+        this.sendNotifyMessage('服务已停止');
+      }
+      this.sendRefreshMessage();
+
       try {
         rmSync(L4D2_PID_FILE_PATH);
       } catch {
@@ -133,6 +151,9 @@ export class AppService {
 
     // 解除进程引用
     process.unref();
+
+    this.sendNotifyMessage(`服务启动成功，PID: ${pid}`);
+    this.sendRefreshMessage();
   }
 
   overwriteDirPermission(target: string) {

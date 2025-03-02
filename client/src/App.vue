@@ -202,6 +202,10 @@ const toastRef = ref<InstanceType<typeof Toast> | null>(null)
 
 // 显示服务操作确认对话框
 const showServiceConfirmation = () => {
+  if (pendingAction.value) {
+    return
+  }
+
   if (isRunning.value) {
     confirmTitle.value = '停止服务'
     confirmMessage.value = '确定要停止服务吗？这将断开所有当前连接。'
@@ -230,9 +234,6 @@ const handlePasswordConfirm = async (password: string) => {
   if (pendingAction.value) {
     try {
       await pendingAction.value(password)
-
-      // 显示操作成功提示
-      toastRef.value?.success('操作已成功执行')
     } catch (error) {
       toastRef.value?.error(`${error}`)
     } finally {
@@ -325,7 +326,7 @@ const startMonitoring = () => {
 
   monitorInterval = setTimeout(() => {
     startMonitoring()
-  }, 1000 * 5)
+  }, 1000 * 15)
 }
 
 // 更新指标数据
@@ -390,12 +391,28 @@ const animateValue = (target: { value: number }, endValue: number, duration = 80
   requestAnimationFrame(updateValue)
 }
 
-// 生命周期钩子
+// Server Notify
+let evt: EventSource | null = null
+const startServerRunningLogMonitor = () => {
+  evt = new EventSource('/api/events')
+  evt.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data)
+      if (data.type === 'notify') {
+        toastRef.value?.info(data.data)
+      } else if (data.type === 'refresh') {
+        getServiceActive()
+      }
+    } catch {
+      // ignore
+    }
+  }
+}
+
 onMounted(() => {
-  // 初始化
-  addLogEntry('info', '服务已在运行中')
   getServiceActive()
   startMonitoring()
+  startServerRunningLogMonitor()
 })
 
 onBeforeUnmount(() => {

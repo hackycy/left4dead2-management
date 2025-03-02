@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { currentLoad, mem } from 'systeminformation';
 import { AppError } from './constant';
 
-@Controller()
+@Controller('api')
 export class AppController {
   constructor(
     private readonly appService: AppService,
@@ -16,15 +16,13 @@ export class AppController {
   sse(): Observable<MessageEvent> {
     return new Observable<MessageEvent>((subscriber) => {
       this.appService.eventEmitter.on('event', (data: unknown) => {
-        subscriber.next({
-          data,
-        } as MessageEvent);
+        subscriber.next(data as MessageEvent);
       });
     });
   }
 
-  @Post('api/stop')
-  async stop(@Body('password') password: string) {
+  @Post('stop')
+  stop(@Body('password') password: string) {
     const pwd = this.configService.get<string>('LEFT4DEAD2_PWD');
     if (pwd !== password) {
       throw new AppError('密码不正确');
@@ -35,10 +33,10 @@ export class AppController {
       throw new AppError('端口未配置');
     }
 
-    await this.appService.killL4d2Process(port);
+    void this.appService.killL4d2Process(port);
   }
 
-  @Post('api/start')
+  @Post('start')
   start(@Body('password') password: string) {
     const pwd = this.configService.get<string>('LEFT4DEAD2_PWD');
     if (pwd !== password) {
@@ -68,7 +66,7 @@ export class AppController {
     this.appService.execShellScript(sh);
   }
 
-  @Get('api/status')
+  @Get('status')
   status() {
     const port = this.configService.get<string>('LEFT4DEAD2_PORT');
     if (!port) {
@@ -81,7 +79,7 @@ export class AppController {
     return active ? 'running' : 'stopped';
   }
 
-  @Get('api/metrics')
+  @Get('metrics')
   async metrics() {
     const [cpu, memory] = await Promise.all([currentLoad(), mem()]);
 
